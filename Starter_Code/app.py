@@ -66,6 +66,7 @@ def stations():
     
     return jsonify(station_list)
 
+
 @app.route("/api/v1.0/tobs")
 def tobs():
     session = Session(engine)
@@ -82,6 +83,46 @@ def tobs():
         temperature_list.append(temp)
 
     return jsonify(temperature_list)
+
+########################################################
+
+@app.route("/api/v1.0/<start>")
+def start_(start):
+    session = Session(engine)
+    temperature_query = session.query(func.min(measurement.tobs), func.max(measurement.tobs),\
+        func.avg(measurement.tobs)).filter(measurement.date >= start).all()
+    session.close()
+
+    temperature_describe = []
+
+    for row in temperature_query:
+        temp = {}
+        temp["min temperature"] = row[0]
+        temp["max temperature"] = row[1]
+        temp["avg temperature"] = row[2]
+        temperature_describe.append(temp)
+
+    return jsonify(temperature_describe)
+
+@app.route("/api/v1.0/<start>/<end>")
+def start_end(start,end):
+    session = Session(engine)
+    start = dt.datetime.strptime(start, '%Y/%m/%d')
+    temperature_query = session.query(func.min(measurement.tobs), func.max(measurement.tobs),\
+        func.avg(measurement.tobs)).filter(measurement.date >= start).filter(measurement.date <= end).all()
+    
+    temperature_describe = []
+
+    for row in temperature_query:
+        temp = {}
+        temp["min temperature"] = row[0]
+        temp["max temperature"] = row[1]
+        temp["avg temperature"] = row[2]
+        temperature_describe.append(temp)
+
+    return jsonify(temperature_describe)
+
+########################################################
 
 if __name__ == "__main__":
     app.run(debug=True)
